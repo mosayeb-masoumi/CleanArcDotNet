@@ -1,0 +1,1012 @@
+
+source: https://www.youtube.com/watch?v=AC1W5TaHYKg
+
+1- create new projct and search blank solution
+2- solution name == "eCommerceAppSolution" / create button
+3- right click on root /add / new project / select class library in the left side (or search class library in search field) /
+ project name == "eCommerceApp.Domain"/next/ .NET9.0/ create
+
+4- again right click on root /add / new project / select class library in the left side (or search class library in search field) /
+ project name == "eCommerceApp.Application"/next/ .NET9.0/ create
+
+4- again right click on root /add / new project / select class library in the left side (or search class library in search field) /
+ project name == "eCommerceApp.Infrastructure"/next/ .NET9.0/ create
+
+5- right click on root /add / new project / select ASP.NET Core Web API / next / project name == "eCommerceApp.Host" /
+next / .NET9.0 / create
+
+6- goto eCommerceApp.Domain / create new folder / Entities  and delecte class.cs
+7- right click on Entites folder / add / class / Product.cs  and  Category.cs
+
+product model
+-----------------
+using System.ComponentModel.DataAnnotations;
+namespace eCommerceApp.Domain.Entities
+{
+    public class Product
+    {
+        [Key]
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public decimal Price { get; set; }
+        public string Image { get; set; }
+        public int Quantity { get; set; }
+        public Category? Category { get; set; }
+        public Guid CategoryId { get; set; }
+
+    }
+}
+
+category model
+---------------
+using System.ComponentModel.DataAnnotations;
+namespace eCommerceApp.Domain.Entities
+{
+    public class Category
+    {
+        [Key]
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
+        public ICollection<Product> Products { get; set }
+    }
+}
+
+--------------------------------------------------------------------
+
+8- create DTOs: goto eCommerceApp.Application
+
+create newFolder / by name of DTOs
+
+- now inside folder of DTOs we create another folder by name of Product/ right click on Product foder /add / class
+ / name == ProductBase create another class name==CreateProduct and create another one UpdateProduct
+
+ProductBase 
+---------------
+namespace eCommerceApp.Application.DTOs.ProductDTO
+{
+    public class ProductBase
+    {   
+        [Required]
+        public string? Name { get; set; }
+        [Required]
+        public string? Description { get; set; }
+        [Required]
+        [DataType(DataType.Currency)]
+        public decimal Price { get; set; }
+        [Required]
+        public string? Base64Image { get; set; }
+        [Required]
+        public int Quantity { get; set; }
+        [Required]
+        public Guid CategoryId { get; set; }
+    }
+}
+
+CreateProduct
+-------------
+
+namespace eCommerceApp.Application.DTOs.ProductDTO
+{
+    public class CreateProduct : ProductBase
+    {}
+}
+
+UpdateProduct
+--------------
+using System.ComponentModel.DataAnnotations;
+
+namespace eCommerceApp.Application.DTOs.Product
+{
+    public class UpdateProduct : ProductBase
+    {
+        [Required]
+        public Guid Id { get; set; }
+    }
+
+}
+
+
+GetProduct
+--------------
+using eCommerceApp.Application.DTOs.Category;
+
+namespace eCommerceApp.Application.DTOs.Product
+{
+    public class GetProduct : ProductBase
+    {
+        [Required]
+        public Guid Id { get; set; }
+        public GetCategory? Category { get; set; }
+    }
+
+}
+
+
+---------------------------------------------------
+9- now inside the folder od DTOs we create another folder by name of Category and we add needed modes in it
+
+CategoryBase
+---------------
+namespace eCommerceApp.Application.DTOs.Category
+{
+    public class CategoryBase
+    {   
+        [Required]
+        public string? Name { get; set; }
+    }
+}
+
+
+CreateCategory
+--------------
+namespace eCommerceApp.Application.DTOs.Category
+{
+    public class CreateCategory: CategoryBase
+    {
+    }
+}
+
+
+UpdateCategory 
+-------------------
+namespace eCommerceApp.Application.DTOs.Category
+{
+    public class UpdateCategory : CategoryBase
+    {
+         [Required]
+        public Guid Id { get; set; }
+    }
+}
+
+
+GetCategory 
+-------------------
+using eCommerceApp.Application.DTOs.Product;
+
+namespace eCommerceApp.Application.DTOs.Category
+{
+    public class GetCategory : CategoryBase
+    {
+        public Guid Id { get; set; }
+        public ICollection<GetProduct>? Products { get; set; }
+    }
+}
+
+------------------------------------------------------------
+
+10 - now got to eCommerceApp.Domain right click / new folder / name == Interfaces / add /class / name == IGeneric
+
+namespace eCommerceApp.Domain.Interfaces
+{
+    public interface IGeneric<TEntity> where TEntity : class
+    {
+        Task<IEnumerable<TEntity>> GetAllAsync();
+        Task<TEntity> GetByIdAsync(Guid id);
+        Task<int> AddAsync(TEntity entity);
+        Task<int> UpdateAsync(TEntity entity);
+        Task<int> DeleteAsync(Guid id);
+    }
+}
+
+-----------------------------------------------------------
+ 11- now got to eCommerceApp.Infrastructure  /right cleck / new folder/ name == Reositories   for our interfaces
+
+/ add / class / name == GenericRepository
+
+** inside eCommerceApp.Infrastructure we delete class1.cs
+
+
+namespace eCommerceApp.Infrastructure.Repositories
+{
+    public class GenericRepository : IGeneric  // here we can see red underline below iGeneric
+    {
+    }
+}
+
+time: 00:19'
+**** for solve it we goto root of project and 
+then goto 
+1- eCommerceApp.Application/Dependencies / right Click/ AddProjectRefrence / select eCommerceApp.Domain / ok
+2- eCommerceApp.Infrastructure/Dependencies / right Click/ AddProjectRefrence / select eCommerceApp.Application / ok
+ 
+now click on red usrlin IGeneric and import   using eCommerceApp.Domain.Interfaces;
+
+then continue coding ...
+
+
+using eCommerceApp.Domain.Interfaces;
+
+namespace eCommerceApp.Infrastructure.Repositories
+{
+    public class GenericRepository<TEntity> : IGeneric<TEntity> where TEntity: class
+ {
+ }
+}
+ right click on IGeneric<TEntity> then select "implement interface" and interfaces will be added like below:
+
+
+
+using eCommerceApp.Domain.Interfaces;
+
+namespace eCommerceApp.Infrastructure.Repositories
+{
+    public class GenericRepository<TEntity>(AppDbContext context) : IGeneric<TEntity> where TEntity : class
+    {
+        public Task<int> AddAsync(TEntity entity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> DeleteAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<TEntity>> GetAllAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<TEntity> GetByIdAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> UpdateAsync(TEntity entity)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+-----------------------------------------------------------
+
+ 12 - now create AppDbContext 
+
+- goto eCommerceApp.Infrastrucure / right click/ create folder / name== Data / add/ class/ AppDbContext 
+
+namespace eCommerceApp.Infrastructure.Data
+{
+    public class AppDbContext : DbContext
+    {
+    }
+}
+
+DbContext has red underline / click on it / yellow bulb / install package Microsoft.EntityFramworkCore/ find and instal latest version
+
+now we can see in eCommerceApp.Infrastructure/ Dependencies /Packages/ Microsoft.EntityFramworkCore
+
+and our code will be :
+
+using Microsoft.EntityFrameworkCore;
+
+namespace eCommerceApp.Infrastructure.Data
+{
+    public class AppDbContext : DbContext
+    {
+    }
+}
+-----------
+
+using eCommerceApp.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace eCommerceApp.Infrastructure.Data
+{
+    public class AppDbContext : DbContext
+    {
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
+
+        public DbSet<Product> Products { get; set; }
+        public DbSet<Category> Categories { get; set; }
+    }
+}
+
+now we have a suggestion underline for AppDbContext to use primary contructor
+
+our code will be: 
+
+using eCommerceApp.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace eCommerceApp.Infrastructure.Data
+{
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+    {
+        public DbSet<Product> Products { get; set; }
+        public DbSet<Category> Categories { get; set; }
+    }
+}
+------------------------------------
+
+13- now go back to  GenericRepository and import AppDbContext ==> "using eCommerceApp.Infrastructure.Data;"
+
+-----------------------------------
+
+14-  goto eCommerceApp.Application and create new folder / name == "Exceptions" / add / class / name == ItemNotFoundException
+
+
+namespace eCommerceApp.Application.Exceptions
+{
+    public class ItemNotFoundException: Exception
+    {
+        public ItemNotFoundException(string message):base(message)
+        { 
+
+        }
+    }
+}
+
+now make the class use primary constructor as (screw driver suggest) like below:
+
+namespace eCommerceApp.Application.Exceptions
+{
+    public class ItemNotFoundException(string message) : Exception(message)
+    {
+    }
+}
+ 
+-------------------------------------------
+15 - now goback to eCommerceApp.Infrastructure.Repositories and complete GenericRepository as below:
+
+using eCommerceApp.Domain.Interfaces;
+using eCommerceApp.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace eCommerceApp.Infrastructure.Repositories
+{
+    public class GenericRepository<TEntity>(AppDbContext context) : IGeneric<TEntity> where TEntity : class
+    {
+        public async Task<int> AddAsync(TEntity entity)
+        {
+            context.Set<TEntity>().Add(entity);
+            return await context.SaveChangesAsync();
+        }
+
+        public async Task<int> DeleteAsync(Guid id)
+        {
+            var entity = await context.Set<TEntity>().FindAsync(id);
+               if(entity is null)
+                     return 0; // means item not found in this project
+
+            context.Set<TEntity>().Remove(entity);
+            return await context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<TEntity>> GetAllAsync()
+        {
+            return await context.Set<TEntity>().AsNoTracking().ToListAsync();
+        }
+
+        public async Task<TEntity> GetByIdAsync(Guid id)
+        {
+            var result = await context.Set<TEntity>().FindAsync(id);
+            return result!;
+        }
+
+        public async Task<int> UpdateAsync(TEntity entity)
+        {
+            context.Set<TEntity>().Update(entity);
+            return await context.SaveChangesAsync();
+        }
+    }
+}
+-------------------------------------------
+
+16 - create dependency injection ==>  goto eCommerceApp.Infrastructure/ new folder / name =="DependencyInjection" /add
+class / name == ServiceContainer
+
+using Microsoft.Extensions.DependencyInjection;
+
+namespace eCommerceApp.Infrastructure.DependencyInjection
+{
+    public static class ServiceContainer
+    {
+        public static IServiceCollection AddInfrastructureService(this IServiceCollection services, IConfiguration)
+        {
+        }
+    }
+}
+
+IConfiguration) has red underline and we must iport related library
+click on IConfiguration then click on yellow bulb then "Install package Microsoft.Extensions.Configuration.Abstraction"
+ "find and install latest version"  and this library will be added "using Microsoft.Extensions.Configuration;"
+
+----------
+17 -
+ install sql server
+==> goto eCommerceApp.Infrastructure / Dependencies/manage nuget packages / search "Microsoft.EntityFrameworkCore.SqlServer"
+ and install latest version
+
+ install tools
+==> goto eCommerceApp.Host / Dependencies/manage nuget packages / search "Microsoft.EntityFrameworkCore.Tools"
+ and install latest version  (use this library for migration)
+
+-------------------
+
+18 - go back to eCommerceApp.Infrastructure.DependencyInjection / ServiceContainer and complete itas below:
+
+using eCommerceApp.Domain.Entities;
+using eCommerceApp.Domain.Interfaces;
+using eCommerceApp.Infrastructure.Data;
+using eCommerceApp.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace eCommerceApp.Infrastructure.DependencyInjection
+{
+    public static class ServiceContainer
+    {
+        public static IServiceCollection AddInfrastructureService
+            (this IServiceCollection services, IConfiguration config)
+        {
+            string connectionString = "Default";
+            services.AddDbContext<AppDbContext>(options =>
+             options.UseSqlServer(config.GetConnectionString(connectionString),
+             sqlOptions =>
+             { // Ensure this is the correct assemply
+                 sqlOptions.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
+                 sqlOptions.EnableRetryOnFailure(); // Enable Automatic retriesfor transient failures
+             }),
+             ServiceLifetime.Scoped);
+
+            // inject out entities  ***** here is important
+            services.AddScoped<IGeneric<Product>, GenericRepository<Product>>();
+            services.AddScoped<IGeneric<Category>, GenericRepository<Category>>();
+
+            return services;
+        }
+    }
+}
+
+----------------------------------------
+
+19 - now goto eCommerceApp.Host/ appsetting.json and define connectionString as below:
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "Default": "Server=(local); Database=eCommerceAppDb; Trusted_Connection=true; TrustServerCertificate=true"
+  }
+}
+------------------------------------------
+
+20 - now goto eCommerceApp.Application / new folder/name== Services / new folder/name == Interfaces/add / class / IProductService
+
+---------------------------------------------
+
+21 - goto goto eCommerceApp/DTOs/ right click/ add/ class/ name== ServiceResponse
+
+namespace eCommerceApp.Application.DTOs
+{
+    public record ServiceResponse(bool Success = false, string Message = null!);
+   
+}
+--------------------------------
+
+22- now goback to eCommerceApp.Application/Services / Interfaces/ IProductService
+
+and complete it : 
+
+using eCommerceApp.Application.DTOs;
+using eCommerceApp.Application.DTOs.Product;
+
+namespace eCommerceApp.Application.Services.Interfaces
+{
+    public interface IProductService
+    {
+        Task<IEnumerable<GetProduct>> GetAllAsync();
+        Task<GetProduct> GetByIdAsync(Guid id);
+        Task<ServiceResponse> AddAsync(CreateProduct product);
+        Task<ServiceResponse> UpdateAsync(UpdateProduct product);
+        Task<ServiceResponse> DeleteAsync(Guid id);
+    }
+}
+----------------------------------
+
+23 - now goto eCommerceApp.Application / Services / Interfaces/add / class / ICategoryService
+
+using eCommerceApp.Application.DTOs;
+using eCommerceApp.Application.DTOs.Category;
+
+namespace eCommerceApp.Application.Services.Interfaces
+{
+    public interface ICategoryService
+    {
+        Task<IEnumerable<GetCategory>> GetAllAsync();
+        Task<GetCategory> GetByIdAsync(Guid id);
+        Task<ServiceResponse> AddAsync(CreateCategory category);
+        Task<ServiceResponse> UpdateAsync(UpdateCategory category);
+        Task<ServiceResponse> DeleteAsync(Guid id);
+    }
+}
+--------------------------------------
+
+24 - now goto eCommerceApp.Application / Services / new folder / Implementations/ add / class /ProductService
+
+using eCommerceApp.Application.DTOs;
+using eCommerceApp.Application.DTOs.Product;
+using eCommerceApp.Application.Services.Interfaces;
+
+namespace eCommerceApp.Application.Services.Implementations
+{
+    public class ProductService : IProductService
+    {
+        public Task<ServiceResponse> AddAsync(CreateProduct product)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ServiceResponse> DeleteAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<GetProduct>> GetAllAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<GetProduct> GetByIdAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ServiceResponse> UpdateAsync(UpdateProduct product)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+-------------------------------------------
+
+25 - now goto eCommerceApp.Application / Services / new folder / Implementations/ add / class /CategoryService
+
+using eCommerceApp.Application.DTOs;
+using eCommerceApp.Application.DTOs.Category;
+using eCommerceApp.Application.Services.Interfaces;
+
+namespace eCommerceApp.Application.Services.Implementations
+{
+    public class CategoryService : ICategoryService
+    {
+        public Task<ServiceResponse> AddAsync(CreateCategory category)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ServiceResponse> DeleteAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<GetCategory>> GetAllAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<GetCategory> GetByIdAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ServiceResponse> UpdateAsync(UpdateCategory category)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+
+------------------------------------------------------------
+
+26 - now we need auto mapper to complete eCommerceApp.Application.Services.Implementations/ProductService and .../CategoryService
+
+goto eCommerceApp.Application.Dependencies/ nuget package / AutoMapper / install it
+
+and now create automap config  goto eCommerceApp.Application/new folder/Mapping/ add/ class/ MappingConfig
+---------------------------------------------
+
+27- create dependencyInjection eCommerceApp.Application/new folder/ add/ class/ ServiceContainer
+
+using eCommerceApp.Application.Mapping;
+using eCommerceApp.Application.Services.Implementations;
+using eCommerceApp.Application.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace eCommerceApp.Application.DependencyInjection
+{
+    public static class ServiceContainer
+    {
+        public static IServiceCollection AddApplicationService(this IServiceCollection services)
+        {
+            services.AddAutoMapper(typeof(MappingConfig));
+            services.AddScoped<IProductService , ProductService>();
+            services.AddScoped<ICategoryService , CategoryService>();
+
+            return services;
+        }
+    }
+}
+
+------------------------------------------------
+
+28- now goback to eCommerceApp.Application.Services.Implementations/ProductService and complete it :
+
+using AutoMapper;
+using eCommerceApp.Application.DTOs;
+using eCommerceApp.Application.DTOs.Product;
+using eCommerceApp.Application.Services.Interfaces;
+using eCommerceApp.Domain.Entities;
+using eCommerceApp.Domain.Interfaces;
+
+namespace eCommerceApp.Application.Services.Implementations
+{
+    public class ProductService(IGeneric<Product> productInterface , IMapper mapper) : IProductService
+    {
+        public async Task<ServiceResponse> AddAsync(CreateProduct product)
+        {
+           var mappedData = mapper.Map<Product>(product);
+            int result = await productInterface.AddAsync(mappedData);
+
+               return result > 0 ? new ServiceResponse(true, "Product Deleted!") :
+                new ServiceResponse(false, "Product not found or failed delete!");
+        }
+
+        public async Task<ServiceResponse> DeleteAsync(Guid id)
+        {
+           int result = await productInterface.DeleteAsync(id);
+            return result > 0 ? new ServiceResponse(true, "Product Deleted!") :
+                new ServiceResponse(false, "Product failed to be deleted!");
+        }
+
+        public async Task<IEnumerable<GetProduct>> GetAllAsync()
+        {
+            var rawData = await productInterface.GetAllAsync();
+            if (!rawData.Any()) return [];  // is the same to ==>   if (rawData.Count() == 0) return [];
+
+            return mapper.Map<IEnumerable<GetProduct>>(rawData);
+
+        }
+
+        public async Task<GetProduct> GetByIdAsync(Guid id)
+        {
+            var rawData = await productInterface.GetByIdAsync(id);
+            if (rawData == null) return new GetProduct(); 
+
+            return mapper.Map<GetProduct>(rawData);
+        }
+
+        public async Task<ServiceResponse> UpdateAsync(UpdateProduct product)
+        {
+            var mappedData = mapper.Map<Product>(product);
+            int result = await productInterface.UpdateAsync(mappedData);
+
+            return result > 0 ? new ServiceResponse(true, "Product Updated!") :
+               new ServiceResponse(false, "Product failed to be Updated!");
+        }
+    }
+}
+
+------------------------------------
+
+29 - now goback to eCommerceApp.Application.Services.Implementations/CategoryService and complete it :
+
+using AutoMapper;
+using eCommerceApp.Application.DTOs;
+using eCommerceApp.Application.DTOs.Category;
+using eCommerceApp.Application.Services.Interfaces;
+using eCommerceApp.Domain.Entities;
+using eCommerceApp.Domain.Interfaces;
+
+namespace eCommerceApp.Application.Services.Implementations
+{
+    public class CategoryService(IGeneric<Category> categoryInterface, IMapper mapper) : ICategoryService
+    {
+        public async Task<ServiceResponse> AddAsync(CreateCategory category)
+        {
+            var mappedData = mapper.Map<Category>(category);
+            int result = await categoryInterface.AddAsync(mappedData);
+
+            return result > 0 ? new ServiceResponse(true, "Category Added!") :
+               new ServiceResponse(false, "Category failed to be Added!");
+        }
+
+        public async Task<ServiceResponse> DeleteAsync(Guid id)
+        {
+            int result = await categoryInterface.DeleteAsync(id);
+            
+            return result > 0 ? new ServiceResponse(true, "Category Deleted!") :
+                new ServiceResponse(false, "Category not found or failed delete!");
+        }
+
+        public async Task<IEnumerable<GetCategory>> GetAllAsync()
+        {
+            var rawData = await categoryInterface.GetAllAsync();
+            if (!rawData.Any()) return [];  // is the same to ==>   if (rawData.Count() == 0) return [];
+
+            return mapper.Map<IEnumerable<GetCategory>>(rawData);
+        }
+
+        public async Task<GetCategory> GetByIdAsync(Guid id)
+        {
+            var rawData = await categoryInterface.GetByIdAsync(id);
+            if (rawData == null) return new GetCategory();
+
+            return mapper.Map<GetCategory>(rawData);
+        }
+
+        public async Task<ServiceResponse> UpdateAsync(UpdateCategory category)
+        {
+            var mappedData = mapper.Map<Category>(category);
+            int result = await categoryInterface.UpdateAsync(mappedData);
+
+            return result > 0 ? new ServiceResponse(true, "Category Updated!") :
+               new ServiceResponse(false, "Category failed to be Updated!");
+        }
+    }
+}
+
+-------------------------------------------------------
+
+30-now create Controller for Product:
+
+goto eCommerceApp.Host/Controller/add / Controller / in the left column select API / right column select API Controller empty
+/ name == ProductController.cs
+
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace eCommerceApp.Host.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductController(IProductService productService ) : ControllerBase
+    {
+    }
+}
+
+now we can see we face red underline for IProductService to resolve it ;
+goto eCommerceApp.Host/Dependencies/Add Project reference/select eCommerceApp.Application/ and then click on 
+IProductService and iport related library :
+
+using eCommerceApp.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace eCommerceApp.Host.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductController(IProductService productService ) : ControllerBase
+    {
+    }
+}
+
+
+full code:
+-------
+
+using eCommerceApp.Application.DTOs.Product;
+using eCommerceApp.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace eCommerceApp.Host.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductController(IProductService productService ) : ControllerBase
+    {
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
+        {
+            //var data = await productService.GetAllAsync();
+            //return data.Count() > 0 ? Ok(data) : NotFound();
+            // is equal to below
+
+            var data = await productService.GetAllAsync();
+            return data.Any() ? Ok(data) : NotFound(data);
+        }
+
+        [HttpGet("single/{id}")]
+        public async Task<IActionResult> GetSingle(Guid id)
+        {
+            var data = await productService.GetByIdAsync(id);
+            return data != null ? Ok(data) : NotFound(data);
+        }
+
+
+        [HttpPost("add")]
+        public async Task<IActionResult> Add(CreateProduct product)
+        {
+            var result = await productService.AddAsync(product);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpPut("update")]
+        public async Task<IActionResult> Update(UpdateProduct product)
+        {
+            var result = await productService.UpdateAsync(product);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpDelete("delete{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await productService.DeleteAsync(id);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+    }
+}
+
+-----------------------------------------
+
+31 - now create Controller for Category:
+
+goto eCommerceApp.Host/Controller/add / Controller / in the left column select API / right column select API Controller empty
+/ name == CategoryController.cs
+
+using eCommerceApp.Application.DTOs.Category;
+using eCommerceApp.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace eCommerceApp.Host.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CategoryController(ICategoryService categoryService) : ControllerBase
+    {
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
+        {
+            //var data = await productService.GetAllAsync();
+            //return data.Count() > 0 ? Ok(data) : NotFound();
+            // is equal to below
+
+            var data = await categoryService.GetAllAsync();
+            return data.Any() ? Ok(data) : NotFound(data);
+        }
+
+        [HttpGet("single/{id}")]
+        public async Task<IActionResult> GetSingle(Guid id)
+        {
+            var data = await categoryService.GetByIdAsync(id);
+            return data != null ? Ok(data) : NotFound(data);
+        }
+
+
+        [HttpPost("add")]
+        public async Task<IActionResult> Add(CreateCategory category)
+        {
+            var result = await categoryService.AddAsync(category);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpPut("update")]
+        public async Task<IActionResult> Update(UpdateCategory category)
+        {
+            var result = await categoryService.UpdateAsync(category);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpDelete("delete{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await categoryService.DeleteAsync(id);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+    }
+}
+----------------------------------
+
+32 - now migration for database  
+
+first goto  eCommerceApp.Host/Dependencies/ right click/ add Project reference / select eCommerceApp.Infrastructure /ok
+
+then got to eCommerceApp.Host/progrm.cs
+
+
+
+using eCommerceApp.Infrastructure.DependencyInjection;
+using eCommerceApp.Application.DependencyInjection;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+
+builder.Services.AddInfrastructureService(builder.Configuration);
+builder.Services.AddApplicationService();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+
+
+---------------------------------------------------
+
+33- make the host as start up
+
+goto root eCommerceApp.Host/right click / set as start up project
+
+--------------------------------
+
+34 - select Tools > NuGet Package Manager > Package Manager Console from the top menu  to see the related terminal
+
+select  eCommerceApp.Infrastructure as default project
+
+PM> add-migration Initials
+PM> update-database
+
+-------------------------------------
+
+35 - eCommerceApp.Host/Dependencie/ manage nutget packages/install install Scalar.AspNetCore
+
+
+program.cs;
+---------------
+using eCommerceApp.Infrastructure.DependencyInjection;
+using eCommerceApp.Application.DependencyInjection;
+using Scalar.AspNetCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+
+builder.Services.AddInfrastructureService(builder.Configuration);
+builder.Services.AddApplicationService();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapScalarApiReference();
+    app.MapOpenApi();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+----------------------------------------
+
+then run https://localhost:7256/scalar/v1   to get the port goto ==> right column then 
+click on properties then launchSettings.json then we can get our baseAddress 
+and there we can test our api instead of swagger
+
+
+
+35 - run the project solid triangle green button
+
